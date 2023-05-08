@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 from countpillar.composition import create_pill_comp
 from countpillar.io_utils import create_yolo_annotations, load_pill_mask_paths
+from countpillar.transform import resize_bg
 
 
 @click.command()
@@ -87,9 +88,10 @@ def main(
     (output_folder / "images").mkdir(parents=True, exist_ok=True)
     (output_folder / "labels").mkdir(parents=True, exist_ok=True)
 
-    # Load background image
+    # Load and resize background image
     bg_img = cv2.imread(str(bg_img_path))
     bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
+    bg_img = resize_bg(bg_img, 1920, 1080)
 
     for j in tqdm(range(n_images), desc="Generating images"):
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
