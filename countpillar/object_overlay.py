@@ -3,7 +3,7 @@ from typing import List, Tuple
 import numpy as np
 
 
-def object_add(
+def add_pill_on_bg(
     img_bg: np.ndarray,
     mask_comp: np.ndarray,
     img_pill: np.ndarray,
@@ -109,14 +109,14 @@ def object_add(
     return img_bg, mask_comp, mask_added
 
 
-def check_areas(
-    mask_comp: np.ndarray, obj_areas: List[float], overlap_degree: float = 0.3
+def verify_overlap(
+    mask_comp: np.ndarray, obj_areas: List[int], overlap_degree: float = 0.3
 ) -> bool:
     """Check if any of the previous pills overlaps more than overlap_degree with the current pill.
 
     Args:
         mask_comp (np.ndarray): mask of the background image composition.
-        obj_areas (np.ndarray): List of pill areas in order of thier addition to the background image.
+        obj_areas (List[int]): List of pill areas in order of thier addition to the background image.
         overlap_degree (float, optional): overlap degree threshold. Defaults to 0.3.
 
     Returns:
