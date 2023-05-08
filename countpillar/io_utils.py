@@ -5,6 +5,21 @@ import cv2
 import numpy as np
 
 
+def load_pill_mask_paths(pill_mask_dir: Path) -> List[Tuple[Path, Path]]:
+    """Load the pill image and the corresponding mask paths.
+
+    Args:
+        pill_mask_dir: The directory containing the pill images and masks.
+
+    Returns:
+        pill_mask_paths: The paths to the pill image and mask.
+    """
+    pill_mask_paths: List[Tuple[Path, Path]] = [
+        (p, pill_mask_dir / p.name) for p in (pill_mask_dir / "image").glob("*.jpg")
+    ]
+    return pill_mask_paths
+
+
 def get_img_and_mask(
     pill_mask_paths: Tuple[Path, Path], thresh: int = 10
 ) -> Tuple[np.ndarray, np.ndarray]:
