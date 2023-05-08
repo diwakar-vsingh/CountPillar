@@ -19,6 +19,10 @@ To install CountPillar, you will need to create a conda environment and install 
     ```
     pip install -r requirements.txt
     ```
+3. Install the CountPillar package using:
+    ```
+    pip install -e .
+    ```
 
 ### Development
 To set up a development environment for CountPillar, you can use the following command:
@@ -27,12 +31,21 @@ To set up a development environment for CountPillar, you can use the following c
 
 This will install additional development dependencies and allow you to make changes to the CountPillar code.
 
+This repository uses pre-commits for `flake8`, `black`, and `isort`.
+Run the following command from the root of the repository:
+
+```shell script
+pip install pre-commit
+pre-commit install
+```
+to ensure that all code is properly linted & formatted before committing.
+
 ## Usage
 ### Generate Masks
 
 To use CountPillar, you will first need to generate masks for the pill images in the `./data/pills/images` directory. This can be done by running the following command:
 ```
-python countpillar/generate_masks.py
+mask_generator
 ```
 This will create mask images for each pill image and save them in the `data/pills/masks` directory.
 
@@ -40,6 +53,6 @@ This will create mask images for each pill image and save them in the `data/pill
 
 After obtaining all the masks, you can create a synthetic dataset by running the following command:
 ```
-python countpillar/generate_dataset.py
+dataset_generator
 ```
 This will generate a synthetic dataset of pills on a background image in the `dataset/synthetic` directory.
