@@ -42,12 +42,12 @@ def resize_bg(
     return img
 
 
-def resize_transform_pill(
+def resize_and_transform_pill(
     img: np.ndarray,
     mask: np.ndarray,
     longest_max: int,
     longest_min: int,
-    augmentations: A.BasicTransform,
+    augmentations: Optional[A.BasicTransform] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Resize the pill image and the corresponding mask to the given height and width.
     Also, apply some random augmentations to the pill image.
@@ -65,14 +65,14 @@ def resize_transform_pill(
 
     # Resize the image to the new size.
     transform_resize = A.Resize(height=h_new, width=w_new)
-    img_t = transform_resize(image=img)["image"]
-    mask_t = transform_resize(image=mask)["mask"]
+    transform_resized = transform_resize(image=img, mask=mask)
+    img_t, mask_t = transform_resized["image"], transform_resized["mask"]
 
     # Apply some random augmentations to the pill image.
     if augmentations is None:
         augmentations = A.Compose(
             [
-                A.Rotate(limit=90, border_mode=0, mask_value=1, p=1.0),
+                A.Rotate(limit=90, border_mode=0, mask_value=0, p=1.0),
                 A.RandomBrightnessContrast(
                     brightness_limit=(-0.1, 0.2),
                     contrast_limit=0.1,
@@ -81,7 +81,7 @@ def resize_transform_pill(
             ]
         )
 
-    img_t = augmentations(image=img_t)["image"]
-    mask_t = augmentations(image=mask_t)["mask"]
+    transforms_aug = augmentations(image=img_t, mask=mask_t)
+    img_t, mask_t = transforms_aug["image"], transforms_aug["mask"]
 
     return img_t, mask_t
