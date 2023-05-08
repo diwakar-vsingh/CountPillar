@@ -43,17 +43,27 @@ def create_pill_comp(
     idx = np.random.randint(len(pill_mask_paths))
     pill_img, mask = get_img_and_mask(pill_mask_paths[idx])
 
-    for i in range(1, num_pills):
+    for i in range(1, num_pills + 1):
         success: bool = False
         for _ in range(max_attempts):
-            x, y = np.random.randint(w_bg), np.random.randint(h_bg)
+            # Randomly sample a position for the pill.
+            # The position is sampled from a normal distribution with mean at the center of the background image
+            # and standard deviation of a quarter of the background image's width and height.
+            x, y = np.random.normal(
+                loc=(w_bg / 2, h_bg / 2), scale=(w_bg / 8, h_bg / 8), size=(2,)
+            )
+            x, y = np.clip(x, 0, w_bg), np.clip(y, 0, h_bg)
 
+            # Resize and transform the pill image and mask.
             pill_img, mask = resize_and_transform_pill(pill_img, mask, 100, 100)
+
+            # Add the pill to the background image.
             bg_img_prev, comp_mask_prev = bg_img.copy(), comp_mask.copy()
             bg_img, comp_mask, added_mask = add_pill_on_bg(
-                bg_img, comp_mask, pill_img, mask, x, y, i
+                bg_img, comp_mask, pill_img, mask, int(x), int(y), i
             )
 
+            # Verify that the pill does not overlap with other pills too much.
             if verify_overlap(comp_mask, pill_areas, max_overlap):
                 pill_areas.append(np.count_nonzero(added_mask))
                 pill_labels.append(1)
