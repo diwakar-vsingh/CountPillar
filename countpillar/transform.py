@@ -74,8 +74,8 @@ def resize_and_transform_pill(
             [
                 A.Rotate(limit=90, border_mode=0, mask_value=0, p=1.0),
                 A.RandomBrightnessContrast(
-                    brightness_limit=(-0.1, 0.2),
-                    contrast_limit=0.1,
+                    brightness_limit=(-0.05, 0.05),
+                    contrast_limit=0.05,
                     brightness_by_max=True,
                 ),
             ]
