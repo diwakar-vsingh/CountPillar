@@ -15,7 +15,8 @@ def load_pill_mask_paths(pill_mask_dir: Path) -> List[Tuple[Path, Path]]:
         pill_mask_paths: The paths to the pill image and mask.
     """
     pill_mask_paths: List[Tuple[Path, Path]] = [
-        (p, pill_mask_dir / p.name) for p in (pill_mask_dir / "image").glob("*.jpg")
+        (p, pill_mask_dir / "masks" / p.name)
+        for p in (pill_mask_dir / "images").glob("*.jpg")
     ]
     return pill_mask_paths
 
