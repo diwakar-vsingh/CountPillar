@@ -51,7 +51,7 @@ from countpillar.transform import resize_bg
 @click.option(
     "-MP",
     "--max-pills",
-    default=40,
+    default=50,
     show_default=True,
     help="Maximum number of pills per image",
 )
@@ -69,6 +69,20 @@ from countpillar.transform import resize_bg
     show_default=True,
     help="Maximum number of attempts to place a pill",
 )
+@click.option(
+    "-mb",
+    "--min-bg-dim",
+    default=1080,
+    show_default=True,
+    help="Minimum dimension of the background image",
+)
+@click.option(
+    "-MB",
+    "--max-bg-dim",
+    default=1920,
+    show_default=True,
+    help="Maximum dimension of the background image",
+)
 def main(
     pill_mask_path: Path,
     bg_img_path: Path,
@@ -78,6 +92,8 @@ def main(
     max_pills: int,
     max_overlap: float,
     max_attempts: int,
+    min_bg_dim: int,
+    max_bg_dim: int,
 ):
     # Load pill mask paths
     pill_mask_paths = load_pill_mask_paths(pill_mask_path)
@@ -91,7 +107,7 @@ def main(
     # Load and resize background image
     bg_img = cv2.imread(str(bg_img_path))
     bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
-    bg_img = resize_bg(bg_img, 1920, 1080)
+    bg_img = resize_bg(bg_img, max_bg_dim, min_bg_dim)
 
     for j in tqdm(range(n_images), desc="Generating images"):
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
