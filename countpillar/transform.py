@@ -45,8 +45,8 @@ def resize_bg(
 def resize_and_transform_pill(
     img: np.ndarray,
     mask: np.ndarray,
-    longest_max: int,
-    longest_min: int,
+    longest_max: int = 224,
+    longest_min: int = 224,
     augmentations: Optional[A.BasicTransform] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Resize the pill image and the corresponding mask to the given height and width.
@@ -74,8 +74,8 @@ def resize_and_transform_pill(
             [
                 A.Rotate(limit=90, border_mode=0, mask_value=0, p=1.0),
                 A.RandomBrightnessContrast(
-                    brightness_limit=(-0.05, 0.05),
-                    contrast_limit=0.05,
+                    brightness_limit=0.02,
+                    contrast_limit=0.02,
                     brightness_by_max=True,
                 ),
             ]

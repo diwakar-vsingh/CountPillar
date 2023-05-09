@@ -15,6 +15,7 @@ def create_pill_comp(
     max_pills: int = 15,
     max_overlap: float = 0.2,
     max_attempts: int = 10,
+    **kwargs,
 ) -> Tuple[np.ndarray, np.ndarray, List[int], List[int]]:
     """Create a composition of pills on a background image.
 
@@ -25,6 +26,7 @@ def create_pill_comp(
         max_pills: The maximum number of pills to compose.
         max_overlap: The maximum allowed overlap between pills.
         max_attempts: The maximum number of attempts to compose a pill.
+        **kwargs: Keyword arguments for resize_and_transform_pill.
 
     Returns:
         bg_img: The background image with pills.
@@ -55,7 +57,7 @@ def create_pill_comp(
             x, y = np.clip(x, 0, w_bg), np.clip(y, 0, h_bg)
 
             # Resize and transform the pill image and mask.
-            pill_img, mask = resize_and_transform_pill(pill_img, mask, 100, 100)
+            pill_img, mask = resize_and_transform_pill(pill_img, mask, **kwargs)
 
             # Add the pill to the background image.
             bg_img_prev, comp_mask_prev = bg_img.copy(), comp_mask.copy()
