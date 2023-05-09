@@ -22,7 +22,7 @@ def load_pill_mask_paths(pill_mask_dir: Path) -> List[Tuple[Path, Path]]:
 
 
 def get_img_and_mask(
-    pill_mask_paths: Tuple[Path, Path], thresh: int = 10
+    pill_mask_paths: Tuple[Path, Path], thresh: int = 25
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get the image and mask from the pill mask paths.
 
@@ -38,9 +38,14 @@ def get_img_and_mask(
     img = cv2.imread(str(img_path))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-    mask[mask <= thresh] = 0
-    mask[mask > thresh] = 1
+    try:
+        mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+        mask[mask <= thresh] = 0
+        mask[mask > thresh] = 1
+    except Exception as e:
+        raise FileNotFoundError(
+            f"Could not find mask for image {img_path.name}. Did you run `python -m countpillar/generate_masks.py`?"
+        ) from e
 
     return img, mask
 
