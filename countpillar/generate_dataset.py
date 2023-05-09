@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import click
 import cv2
@@ -6,6 +7,7 @@ from tqdm import tqdm
 
 from countpillar.composition import create_pill_comp
 from countpillar.io_utils import create_yolo_annotations, load_pill_mask_paths
+from countpillar.object_overlay import generate_random_bg
 from countpillar.transform import resize_bg
 
 
@@ -20,15 +22,15 @@ from countpillar.transform import resize_bg
 )
 @click.option(
     "-b",
-    "--bg_img-path",
-    default=Path("./data/bg/plate1.jpg"),
+    "--bg-img-path",
+    default=None,
     type=click.Path(exists=True),
     show_default=True,
     help="Path to the background image",
 )
 @click.option(
     "-o",
-    "--output_folder",
+    "--output-folder",
     default=Path("./dataset/synthetic/"),
     type=click.Path(),
     show_default=True,
@@ -85,7 +87,7 @@ from countpillar.transform import resize_bg
 )
 def main(
     pill_mask_path: Path,
-    bg_img_path: Path,
+    bg_img_path: Optional[Path],
     output_folder: Path,
     n_images: int,
     min_pills: int,
@@ -105,10 +107,14 @@ def main(
     (output_folder / "labels").mkdir(parents=True, exist_ok=True)
 
     # Load and resize background image
-    bg_img = cv2.imread(str(bg_img_path))
-    bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
-    bg_img = resize_bg(bg_img, max_bg_dim, min_bg_dim)
+    if bg_img_path is not None:
+        bg_img = cv2.imread(str(bg_img_path))
+        bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
+        bg_img = resize_bg(bg_img, max_bg_dim, min_bg_dim)
+    else:
+        bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
 
+    # Generate images and annotations and save them
     for j in tqdm(range(n_images), desc="Generating images"):
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
             bg_img, pill_mask_paths, min_pills, max_pills, max_overlap, max_attempts
