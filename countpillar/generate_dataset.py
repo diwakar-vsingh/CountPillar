@@ -136,9 +136,9 @@ def main(
     for j in tqdm(range(n_images), desc="Generating images"):
         # Generate random color background if no background image is provided
         # or if a directory of background images is provided, choose a random image
-        if bg_img is None and bg_img_path is None:
+        if bg_img_path is None:
             bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
-        else:
+        elif bg_img_path.is_dir():
             bg_img = load_bg_image(random.choice(bg_img_paths), min_bg_dim, max_bg_dim)
 
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
