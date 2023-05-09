@@ -3,6 +3,7 @@ from typing import Optional
 
 import click
 import cv2
+import numpy as np
 from tqdm import tqdm
 
 from countpillar.composition import create_pill_comp
@@ -26,7 +27,9 @@ from countpillar.transform import resize_bg
     default=None,
     type=click.Path(exists=True),
     show_default=True,
-    help="Path to the background image",
+    help="""
+    Path to the background image. If not provided, a random color
+    background will be generated.""",
 )
 @click.option(
     "-o",
@@ -107,15 +110,18 @@ def main(
     (output_folder / "labels").mkdir(parents=True, exist_ok=True)
 
     # Load and resize background image
+    bg_img: Optional[np.ndarray] = None
     if bg_img_path is not None:
         bg_img = cv2.imread(str(bg_img_path))
         bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
         bg_img = resize_bg(bg_img, max_bg_dim, min_bg_dim)
-    else:
-        bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
 
     # Generate images and annotations and save them
     for j in tqdm(range(n_images), desc="Generating images"):
+        # Generate random color background image if not provided
+        if bg_img_path is None:
+            bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
+
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
             bg_img, pill_mask_paths, min_pills, max_pills, max_overlap, max_attempts
         )
@@ -123,12 +129,11 @@ def main(
 
         anno_yolo = create_yolo_annotations(mask_comp, labels_comp)
         label_folder = output_folder / "labels"
-        with (label_folder / f"{j}.txt").open("w") as f:
+        n_pills: int = len(anno_yolo)
+        with (label_folder / f"{j}_{n_pills}.txt").open("w") as f:
             for idx in range(len(anno_yolo)):
                 f.write(" ".join(str(el) for el in anno_yolo[idx]) + "\n")
-        cv2.imwrite(
-            str(output_folder / "images" / f"{j}_{len(anno_yolo)}.jpg"), img_comp
-        )
+        cv2.imwrite(str(output_folder / "images" / f"{j}_{n_pills}.jpg"), img_comp)
 
     print("Annotations are saved to the folder: ", label_folder)
     print("Images are saved to the folder: ", output_folder / "images")
