@@ -47,7 +47,7 @@ To use CountPillar, you will first need to generate masks for the pill images in
 ```
 mask_generator
 ```
-This will create mask images for each pill image and save them in the `data/pills/masks` directory.
+This will create mask images for each pill image and save them in the `./data/pills/masks` directory.
 
 ### Generate Synthetic Dataset
 
@@ -55,7 +55,7 @@ After obtaining all the masks, you can create a synthetic dataset by running the
 ```
 dataset_generator
 ```
-he generated dataset will be stored in the dataset/synthetic directory, with the following structure:
+The generated dataset will be stored in the `./dataset/synthetic` directory, with the following structure:
 ```
 dataset/
     └── synthetic/
