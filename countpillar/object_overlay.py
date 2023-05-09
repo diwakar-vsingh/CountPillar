@@ -3,6 +3,29 @@ from typing import List, Tuple
 import numpy as np
 
 
+def generate_random_bg(height: int, width: int) -> np.ndarray:
+    """Generate a random background image.
+
+    Args:
+        height (int): height of the background image.
+        width (int): width of the background image.
+
+    Returns:
+        np.ndarray: random background image.
+    """
+
+    # Generate a random color for the background
+    background_color = np.random.randint(0, 256, size=(3,)).tolist()
+
+    # Create a black background image
+    background_image = np.zeros((height, width, 3), np.uint8)
+
+    # Fill the background image with the random color
+    background_image[:] = background_color
+
+    return background_image
+
+
 def add_pill_on_bg(
     img_bg: np.ndarray,
     mask_comp: np.ndarray,
@@ -45,6 +68,7 @@ def add_pill_on_bg(
         # part of the image which gets into the frame of img_bg along x-axis
         w_part = w_pill - max(0, x + w_pill - w_bg)
 
+        # Add the pill object to the background image and compose the mask
         img_bg[y : y + h_part, x : x + w_part, :] = (
             img_bg[y : y + h_part, x : x + w_part, :]
             * (~mask_rgb_b[:h_part, :w_part, :])
