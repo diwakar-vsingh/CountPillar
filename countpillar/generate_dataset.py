@@ -47,6 +47,13 @@ from countpillar.transform import resize_bg
     help="Number of images to generate",
 )
 @click.option(
+    "-np",
+    "--n-pill-types",
+    default=1,
+    show_default=True,
+    help="Number of different types of pills",
+)
+@click.option(
     "-mp",
     "--min-pills",
     default=5,
@@ -93,6 +100,7 @@ def main(
     bg_img_path: Optional[Path],
     output_folder: Path,
     n_images: int,
+    n_pill_types: int,
     min_pills: int,
     max_pills: int,
     max_overlap: float,
@@ -123,7 +131,13 @@ def main(
             bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
 
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
-            bg_img, pill_mask_paths, min_pills, max_pills, max_overlap, max_attempts
+            bg_img,
+            pill_mask_paths,
+            n_pill_types,
+            min_pills,
+            max_pills,
+            max_overlap,
+            max_attempts,
         )
         img_comp = cv2.cvtColor(img_comp, cv2.COLOR_RGB2BGR)
 

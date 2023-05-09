@@ -134,28 +134,32 @@ def add_pill_on_bg(
 
 
 def verify_overlap(
-    mask_comp: np.ndarray, obj_areas: List[int], overlap_degree: float = 0.3
+    mask_comp: np.ndarray, pill_areas: List[int], overlap_degree: float = 0.3
 ) -> bool:
     """Check if any of the previous pills overlaps more than overlap_degree with the current pill.
 
     Args:
         mask_comp (np.ndarray): mask of the background image composition.
-        obj_areas (List[int]): List of pill areas in order of thier addition to the background image.
+        pill_areas (List[int]): List of pill areas in order of thier addition to the background image.
         overlap_degree (float, optional): overlap degree threshold. Defaults to 0.3.
 
     Returns:
         bool: True if the current pill overlaps with any of the previous pills more than overlap_degree,
         False otherwise.
     """
-    obj_ids = np.unique(mask_comp).astype(np.uint8)[1:-1]
-    masks = mask_comp == obj_ids[:, None, None]
+    # If there are no previous pills, return True
+    if len(pill_areas) == 0:
+        return True
+
+    pill_ids = np.unique(mask_comp).astype(np.uint8)[1:-1]
+    masks = mask_comp == pill_ids[:, None, None]
 
     if len(np.unique(mask_comp)) != np.max(mask_comp) + 1:
         return False
 
     overlap: bool = True
     for idx, mask in enumerate(masks):
-        if np.count_nonzero(mask) / obj_areas[idx] < 1 - overlap_degree:
+        if np.count_nonzero(mask) / pill_areas[idx] < 1 - overlap_degree:
             overlap = False
             break
 
