@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import click
 import cv2
@@ -98,7 +98,7 @@ from countpillar.transform import resize_bg
 def main(
     pill_mask_path: Path,
     bg_img_path: Optional[Path],
-    output_folder: Path,
+    output_folder: Union[str, Path],
     n_images: int,
     n_pill_types: int,
     min_pills: int,
@@ -113,6 +113,7 @@ def main(
     print(f"Found {len(pill_mask_paths)} pill masks.")
 
     # Create output folder
+    output_folder = Path(output_folder)
     output_folder.mkdir(parents=True, exist_ok=True)
     (output_folder / "images").mkdir(parents=True, exist_ok=True)
     (output_folder / "labels").mkdir(parents=True, exist_ok=True)
