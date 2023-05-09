@@ -4,6 +4,8 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 
+from countpillar.transform import resize_bg
+
 
 def load_pill_mask_paths(pill_mask_dir: Path) -> List[Tuple[Path, Path]]:
     """Load the pill image and the corresponding mask paths.
@@ -48,6 +50,24 @@ def get_img_and_mask(
         ) from e
 
     return img, mask
+
+
+def load_bg_image(path: Path, min_dim: int, max_dim) -> np.ndarray:
+    """Load and resize the background image.
+
+    Args:
+        path: The path to the background image.
+        min_dim: The minimum dimension of the background image.
+        max_dim: The maximum dimension of the background image.
+
+    Returns:
+        bg_img: The background image as a numpy array.
+    """
+    bg_img = cv2.imread(str(path))
+    bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
+    bg_img = resize_bg(bg_img, max_dim, min_dim)
+
+    return bg_img
 
 
 def create_yolo_annotations(

@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 from typing import Optional, Union
 
@@ -7,9 +8,12 @@ import numpy as np
 from tqdm import tqdm
 
 from countpillar.composition import create_pill_comp
-from countpillar.io_utils import create_yolo_annotations, load_pill_mask_paths
+from countpillar.io_utils import (
+    create_yolo_annotations,
+    load_bg_image,
+    load_pill_mask_paths,
+)
 from countpillar.object_overlay import generate_random_bg
-from countpillar.transform import resize_bg
 
 
 @click.command()
@@ -28,8 +32,9 @@ from countpillar.transform import resize_bg
     type=click.Path(exists=True),
     show_default=True,
     help="""
-    Path to the background image. If not provided, a random color
-    background will be generated.""",
+    Path to the background image. If directory, a random image will be chosen in each
+    iteration. If not provided, a random color background will be generated.
+    """,
 )
 @click.option(
     "-o",
@@ -121,15 +126,20 @@ def main(
     # Load and resize background image
     bg_img: Optional[np.ndarray] = None
     if bg_img_path is not None:
-        bg_img = cv2.imread(str(bg_img_path))
-        bg_img = cv2.cvtColor(bg_img, cv2.COLOR_BGR2RGB)
-        bg_img = resize_bg(bg_img, max_bg_dim, min_bg_dim)
+        bg_img_path = Path(bg_img_path)
+        if bg_img_path.is_file():
+            bg_img = load_bg_image(bg_img_path, min_bg_dim, max_bg_dim)
+        else:
+            bg_img_paths = list(bg_img_path.glob("*.jpg"))
 
     # Generate images and annotations and save them
     for j in tqdm(range(n_images), desc="Generating images"):
-        # Generate random color background image if not provided
-        if bg_img_path is None:
+        # Generate random color background if no background image is provided
+        # or if a directory of background images is provided, choose a random image
+        if bg_img is None and bg_img_path is None:
             bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
+        else:
+            bg_img = load_bg_image(random.choice(bg_img_paths), min_bg_dim, max_bg_dim)
 
         img_comp, mask_comp, labels_comp, _ = create_pill_comp(
             bg_img,
