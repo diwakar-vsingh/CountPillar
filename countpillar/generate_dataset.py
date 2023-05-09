@@ -120,15 +120,17 @@ def main(
             bg_img, pill_mask_paths, min_pills, max_pills, max_overlap, max_attempts
         )
         img_comp = cv2.cvtColor(img_comp, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(str(output_folder / "images" / f"{j}.jpg"), img_comp)
 
-        annotations_yolo = create_yolo_annotations(mask_comp, labels_comp)
-        for idx in range(len(annotations_yolo)):
-            label_folder = output_folder / "labels"
-            with (label_folder / f"{j}.txt").open("a") as f:
-                f.write(" ".join(str(el) for el in annotations_yolo[idx]) + "\n")
+        anno_yolo = create_yolo_annotations(mask_comp, labels_comp)
+        label_folder = output_folder / "labels"
+        with (label_folder / f"{j}.txt").open("w") as f:
+            for idx in range(len(anno_yolo)):
+                f.write(" ".join(str(el) for el in anno_yolo[idx]) + "\n")
+        cv2.imwrite(
+            str(output_folder / "images" / f"{j}_{len(anno_yolo)}.jpg"), img_comp
+        )
 
-    print("Annotations are saved to the folder: ", output_folder / "labels")
+    print("Annotations are saved to the folder: ", label_folder)
     print("Images are saved to the folder: ", output_folder / "images")
 
 
