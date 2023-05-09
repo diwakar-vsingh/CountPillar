@@ -1,11 +1,13 @@
+import os
 import random
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import click
 import cv2
 import numpy as np
-from tqdm import tqdm
+from joblib import Parallel, delayed
+from tqdm import trange
 
 from countpillar.composition import create_pill_comp
 from countpillar.io_utils import (
@@ -14,6 +16,36 @@ from countpillar.io_utils import (
     load_pill_mask_paths,
 )
 from countpillar.object_overlay import generate_random_bg
+
+
+def generate_samples(
+    bg_img: Optional[np.ndarray],
+    bg_img_path: Optional[Path],
+    bg_img_paths: List[Path],
+    output_folder: Path,
+    min_bg_dim: int,
+    max_bg_dim: int,
+    idx,
+    **kwargs,
+) -> None:
+    """Generate and save a single sample along with its annotation."""
+    # Generate random color background if no background image is provided
+    # or if a directory of background images is provided, choose a random image
+    if bg_img_path is None:
+        bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
+    elif bg_img_path.is_dir():
+        bg_img = load_bg_image(random.choice(bg_img_paths), min_bg_dim, max_bg_dim)
+
+    img_comp, mask_comp, labels_comp, _ = create_pill_comp(bg_img, **kwargs)
+    img_comp = cv2.cvtColor(img_comp, cv2.COLOR_RGB2BGR)
+
+    # Save the image and annotations
+    anno_yolo = create_yolo_annotations(mask_comp, labels_comp)
+    n_pills: int = len(anno_yolo)
+    with (output_folder / "labels" / f"{idx}_{n_pills}.txt").open("w") as f:
+        for j in range(len(anno_yolo)):
+            f.write(" ".join(str(el) for el in anno_yolo[j]) + "\n")
+    cv2.imwrite(str(output_folder / "images" / f"{idx}_{n_pills}.jpg"), img_comp)
 
 
 @click.command()
@@ -100,6 +132,13 @@ from countpillar.object_overlay import generate_random_bg
     show_default=True,
     help="Maximum dimension of the background image",
 )
+@click.option(
+    "-c",
+    "--num-cpu",
+    default=os.cpu_count() // 2,
+    show_default=True,
+    help="The number of CPU cores to use",
+)
 def main(
     pill_mask_path: Path,
     bg_img_path: Optional[Path],
@@ -112,19 +151,21 @@ def main(
     max_attempts: int,
     min_bg_dim: int,
     max_bg_dim: int,
+    num_cpu: int,
 ):
     # Load pill mask paths
     pill_mask_paths = load_pill_mask_paths(pill_mask_path)
     print(f"Found {len(pill_mask_paths)} pill masks.")
 
     # Create output folder
-    output_folder = Path(output_folder)
-    output_folder.mkdir(parents=True, exist_ok=True)
-    (output_folder / "images").mkdir(parents=True, exist_ok=True)
-    (output_folder / "labels").mkdir(parents=True, exist_ok=True)
+    output_path = Path(output_folder)
+    output_path.mkdir(parents=True, exist_ok=True)
+    (output_path / "images").mkdir(parents=True, exist_ok=True)
+    (output_path / "labels").mkdir(parents=True, exist_ok=True)
 
-    # Load and resize background image
+    # Load and resize background image if provided
     bg_img: Optional[np.ndarray] = None
+    bg_img_paths: List[Path] = []
     if bg_img_path is not None:
         bg_img_path = Path(bg_img_path)
         if bg_img_path.is_file():
@@ -133,35 +174,30 @@ def main(
             bg_img_paths = list(bg_img_path.glob("*.jpg"))
 
     # Generate images and annotations and save them
-    for j in tqdm(range(n_images), desc="Generating images"):
-        # Generate random color background if no background image is provided
-        # or if a directory of background images is provided, choose a random image
-        if bg_img_path is None:
-            bg_img = generate_random_bg(min_bg_dim, max_bg_dim)
-        elif bg_img_path.is_dir():
-            bg_img = load_bg_image(random.choice(bg_img_paths), min_bg_dim, max_bg_dim)
-
-        img_comp, mask_comp, labels_comp, _ = create_pill_comp(
+    kwargs: Dict[str, Any] = {
+        "pill_mask_paths": pill_mask_paths,
+        "n_pill_types": n_pill_types,
+        "min_pills": min_pills,
+        "max_pills": max_pills,
+        "max_overlap": max_overlap,
+        "max_attempts": max_attempts,
+    }
+    Parallel(n_jobs=num_cpu)(
+        delayed(generate_samples)(
             bg_img,
-            pill_mask_paths,
-            n_pill_types,
-            min_pills,
-            max_pills,
-            max_overlap,
-            max_attempts,
+            bg_img_path,
+            bg_img_paths,
+            output_path,
+            min_bg_dim,
+            max_bg_dim,
+            idx,
+            **kwargs,
         )
-        img_comp = cv2.cvtColor(img_comp, cv2.COLOR_RGB2BGR)
+        for idx in trange(n_images, desc="Generating images")
+    )
 
-        anno_yolo = create_yolo_annotations(mask_comp, labels_comp)
-        label_folder = output_folder / "labels"
-        n_pills: int = len(anno_yolo)
-        with (label_folder / f"{j}_{n_pills}.txt").open("w") as f:
-            for idx in range(len(anno_yolo)):
-                f.write(" ".join(str(el) for el in anno_yolo[idx]) + "\n")
-        cv2.imwrite(str(output_folder / "images" / f"{j}_{n_pills}.jpg"), img_comp)
-
-    print("Annotations are saved to the folder: ", label_folder)
-    print("Images are saved to the folder: ", output_folder / "images")
+    print("Annotations are saved to the folder: ", output_path / "labels")
+    print("Images are saved to the folder: ", output_path / "images")
 
 
 if __name__ == "__main__":
