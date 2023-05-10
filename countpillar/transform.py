@@ -69,17 +69,16 @@ def resize_and_transform_pill(
     img_t, mask_t = transform_resized["image"], transform_resized["mask"]
 
     # Apply some random augmentations to the pill image.
-    if augmentations is None:
-        augmentations = A.Compose(
-            [
-                A.Rotate(limit=90, border_mode=0, mask_value=0, p=1.0),
-                A.RandomBrightnessContrast(
-                    brightness_limit=0.02,
-                    contrast_limit=0.02,
-                    brightness_by_max=True,
-                ),
-            ]
-        )
+    augmentations = augmentations or A.Compose(
+        [
+            A.Rotate(limit=90, border_mode=0, mask_value=0, p=1.0),
+            A.RandomBrightnessContrast(
+                brightness_limit=0.02,
+                contrast_limit=0.02,
+                brightness_by_max=True,
+            ),
+        ]
+    )
 
     transforms_aug = augmentations(image=img_t, mask=mask_t)
     img_t, mask_t = transforms_aug["image"], transforms_aug["mask"]

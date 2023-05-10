@@ -89,12 +89,12 @@ def create_pill_comp(
                 x, y = np.clip(x, 0, w_bg), np.clip(y, 0, h_bg)
 
                 # Resize and transform the pill image and mask.
-                pill_img, mask = resize_and_transform_pill(pill_img, mask, **kwargs)
+                pill_img_t, mask_t = resize_and_transform_pill(pill_img, mask, **kwargs)
 
                 # Add the pill to the background image.
                 bg_img_prev, comp_mask_prev = bg_img.copy(), comp_mask.copy()
                 bg_img, comp_mask, added_mask = add_pill_on_bg(
-                    bg_img, comp_mask, pill_img, mask, int(x), int(y), count
+                    bg_img, comp_mask, pill_img_t, mask_t, int(x), int(y), count
                 )
 
                 # Verify that the pill does not overlap with other pills too much.
