@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -34,7 +34,7 @@ def add_pill_on_bg(
     x: int,
     y: int,
     idx: int,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], bool]:
     """Add the pill object to the background image.
 
     Args:
@@ -47,22 +47,21 @@ def add_pill_on_bg(
         idx (int): index of the pill object.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray]: the background image composition (background + pills),
-            the mask of the background image composition, and the mask of the pill image, and the
-            mask of the last pill image.
+        - the background image composition (background + pills),
+        - the mask of the background image composition, and the mask of the pill image,
+        - the mask of the last pill image, and
+        - whether the pill object was successfully added to the background image.
     """
     h_bg, w_bg = img_bg.shape[:2]
     h_pill, w_pill = img_pill.shape[:2]
-
-    # Get the top-left corner of the pill object.
-    x = x - w_pill // 2
-    y = y - h_pill // 2
+    mask_added: Optional[np.ndarray] = None
+    success: bool = False
 
     # Convert to RGB mask
     mask_b = mask_pill == 1
     mask_rgb_b = np.stack([mask_b, mask_b, mask_b], axis=2)
 
-    if x >= 0 and y >= 0:
+    if (x >= 0 and y >= 0) and (x < w_bg and y < h_bg):
         # part of the image which gets into the frame of img_bg along y-axis
         h_part = h_pill - max(0, y + h_pill - h_bg)
         # part of the image which gets into the frame of img_bg along x-axis
@@ -79,8 +78,9 @@ def add_pill_on_bg(
             + (idx * mask_b)[:h_part, :w_part]
         )
         mask_added = mask_pill[:h_part, :w_part]
+        success = True
 
-    elif x < 0 and y < 0:
+    elif (x < 0 and y < 0) and (x + w_pill > 0 and y + h_pill > 0):
         h_part = h_pill + y
         w_part = w_pill + x
 
@@ -97,8 +97,9 @@ def add_pill_on_bg(
             + (idx * mask_b)[h_pill - h_part : h_pill, w_pill - w_part : w_pill]
         )
         mask_added = mask_pill[h_pill - h_part : h_pill, w_pill - w_part : w_pill]
+        success = True
 
-    elif x < 0 and y >= 0:
+    elif (x < 0 and y >= 0) and (x + w_pill > 0 and y < h_bg):
         h_part = h_pill - max(0, y + h_pill - h_bg)
         w_part = w_pill + x
 
@@ -113,8 +114,9 @@ def add_pill_on_bg(
             + (idx * mask_b)[:h_part, w_pill - w_part : w_pill]
         )
         mask_added = mask_pill[:h_part, w_pill - w_part : w_pill]
+        success = True
 
-    else:
+    elif (x >= 0 and y < 0) and (x < w_bg and y + h_pill > 0):
         h_part = h_pill + y
         w_part = w_pill - max(0, x + w_pill - w_bg)
 
@@ -129,8 +131,13 @@ def add_pill_on_bg(
             + (idx * mask_b)[h_pill - h_part : h_pill, :w_part]
         )
         mask_added = mask_pill[h_pill - h_part : h_pill, :w_part]
+        success = True
 
-    return img_bg, mask_comp, mask_added
+    # Check if the pill was added successfully within the frame of the background image
+    if success and (idx != np.unique(mask_comp).max()):
+        success = False
+
+    return img_bg, mask_comp, mask_added, success
 
 
 def verify_overlap(

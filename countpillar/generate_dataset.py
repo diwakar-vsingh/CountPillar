@@ -134,7 +134,7 @@ def generate_samples(
 )
 @click.option(
     "-ab/-no-ab",
-    "--allow-pills-outsode/--no-allow-pills-outside",
+    "--allow-pills-outside/--no-allow-pills-outside",
     default=True,
     show_default=True,
     help="Allow pills to be placed on the edge of the background image",
