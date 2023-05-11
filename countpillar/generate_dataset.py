@@ -133,6 +133,13 @@ def generate_samples(
     help="Maximum dimension of the background image",
 )
 @click.option(
+    "-ab/-no-ab",
+    "--allow-pills-outsode/--no-allow-pills-outside",
+    default=True,
+    show_default=True,
+    help="Allow pills to be placed on the edge of the background image",
+)
+@click.option(
     "-c",
     "--num-cpu",
     default=os.cpu_count() // 2,
@@ -151,6 +158,7 @@ def main(
     max_attempts: int,
     min_bg_dim: int,
     max_bg_dim: int,
+    allow_pills_outside: bool,
     num_cpu: int,
 ):
     # Load pill mask paths
@@ -181,6 +189,7 @@ def main(
         "max_pills": max_pills,
         "max_overlap": max_overlap,
         "max_attempts": max_attempts,
+        "allow_pill_on_border": allow_pills_outside,
     }
     Parallel(n_jobs=num_cpu)(
         delayed(generate_samples)(

@@ -9,6 +9,40 @@ from countpillar.object_overlay import add_pill_on_bg, verify_overlap
 from countpillar.transform import resize_and_transform_pill
 
 
+def is_object_mask_within_image(
+    image: np.ndarray, mask: np.ndarray, position: Tuple[int, int]
+) -> bool:
+    """
+    Verifies whether an object along with its mask can fit inside a rectangular image.
+
+    Args:
+        image (numpy.ndarray): The rectangular image to be checked.
+        mask (numpy.ndarray): The binary mask of the object.
+        position (tuple): The (x,y) position of the object within the image.
+
+    Returns:
+        bool: True if the object along with its mask can fit inside the image, False otherwise.
+    """
+    # Get the minimum and maximum x and y coordinates of the mask
+    y_min, y_max = np.min(np.where(mask > 0)[0]), np.max(np.where(mask > 0)[0])
+    x_min, x_max = np.min(np.where(mask > 0)[1]), np.max(np.where(mask > 0)[1])
+    obj_width, obj_height = x_max - x_min, y_max - y_min
+
+    # Determine the dimensions of the mask and the rectangular image
+    image_height, image_width = image.shape[:2]
+
+    # Determine the bounding box of the object
+    x, y = position
+    xmin, ymin = x, y
+    xmax, ymax = x + obj_width, y + obj_height
+
+    # Check if the bounding box of the object is fully contained within the rectangular image
+    if (xmin > 0 and ymin > 0) and (xmax < image_width and ymax < image_height):
+        return True
+    else:
+        return False
+
+
 def random_partition(number: int, num_parts: int) -> List[int]:
     """Generates a list of random integers that add up to a specified number.
 
@@ -37,6 +71,7 @@ def create_pill_comp(
     max_pills: int = 15,
     max_overlap: float = 0.2,
     max_attempts: int = 10,
+    allow_pill_on_border: bool = True,
     **kwargs,
 ) -> Tuple[np.ndarray, np.ndarray, List[int], List[int]]:
     """Create a composition of pills on a background image.
@@ -49,6 +84,8 @@ def create_pill_comp(
         max_pills: The maximum number of pills to compose.
         max_overlap: The maximum allowed overlap between pills.
         max_attempts: The maximum number of attempts to compose a pill.
+        allow_pill_on_border: whether to allow the pill object to be on the border of
+            the background image.
         **kwargs: Keyword arguments for resize_and_transform_pill.
 
     Returns:
@@ -90,6 +127,12 @@ def create_pill_comp(
 
                 # Resize and transform the pill image and mask.
                 pill_img_t, mask_t = resize_and_transform_pill(pill_img, mask, **kwargs)
+
+                # Check if the pill can fit inside the background image.
+                if not allow_pill_on_border and not is_object_mask_within_image(
+                    bg_img, mask_t, (x, y)
+                ):
+                    continue
 
                 # Add the pill to the background image.
                 bg_img_prev, comp_mask_prev = bg_img.copy(), comp_mask.copy()
