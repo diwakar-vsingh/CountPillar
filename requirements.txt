@@ -5,4 +5,4 @@ numpy==1.24.3
 opencv-python==4.7.0.72
 torch==2.0.0
 torchvision==0.15.1
-transformers @ git+https://github.com/huggingface/transformers@ef42c2c487260c2a0111fa9d17f2507d84ddedea
+transformers==4.29.0
